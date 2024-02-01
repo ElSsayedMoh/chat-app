@@ -32,6 +32,8 @@ class Conversation extends Model
     {
         return $this->belongsTo(Message::class , 'last_message_id' , 'id')->withDefault();
     }
-
+    public function recipients(){
+        return $this->hasMany(Recipient::class, 'message_id');
+    }
 
 }

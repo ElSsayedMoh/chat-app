@@ -22,3 +22,7 @@ Broadcast::channel('Messenger.{id}', function ($user, $id) {
         return $user;
     }
 });
+
+Broadcast::channel('Chat' , function ($user){
+    return $user;
+});

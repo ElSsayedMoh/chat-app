@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Recipient extends Pivot
 {
     use HasFactory , SoftDeletes;
-
+    protected $table = 'recipients';
     public $timestamps = false;
+
 
     protected $casts = [
         'read_at' => 'datetime',

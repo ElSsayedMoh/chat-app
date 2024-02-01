@@ -11,14 +11,14 @@
             <input type="hidden" name="conversation_id" :value="conversation ? conversation.id : ''">
             <div class="row align-items-center gx-0">
                 <div class="col-auto">
-                    <a href="#" class="btn btn-icon btn-link text-body rounded-circle" id="dz-btn">
+                    <a href="#" @click.prevent="selectFile()" class="btn btn-icon btn-link text-body rounded-circle" id="dz-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-paperclip"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
                     </a>
                 </div>
 
                 <div class="col">
                     <div class="input-group">
-                        <textarea name="message" v-model="message" class="form-control px-0" placeholder="Type your message..." rows="1" data-emoji-input="" data-autosize="true"></textarea>
+                        <textarea name="message" v-model="message" @keypress="startTyping()" @focus="$root.markAsRead();" class="form-control px-0" placeholder="Type your message..." rows="1" data-emoji-input="" data-autosize="true"></textarea>
 
                         <a href="#" class="input-group-text text-body pe-0" data-emoji-btn="">
                             <span class="icon icon-lg">
@@ -46,30 +46,77 @@ export default {
     ],
     data(){
         return {
-            message: "Enter Your Message..",
+            message: "",
+            attachment: "",
+            start_typing: false,
+            timeout: null,
         }
     },
     methods: {
+        startTyping(){
+            if(!this.start_typing){
+                this.start_typing = true;
+                this.$root.chatChannel.whisper('typing' , {
+                    id: this.$root.userId,
+                    conversation_id: this.$root.conversation.id
+
+                });
+            }
+            if(this.timeout){
+                clearTimeout(this.timeout);
+            }
+
+            this.timeout = setTimeout(() => {
+                this.start_typing = false;
+                this.$root.chatChannel.whisper('stopped-typing' , {
+                    id: this.$root.userId,
+                    conversation_id: this.$root.conversation.id
+                })
+            }, 1000);
+
+        },
         sendMessage(){
             let data = {
-                conversation_id: this.conversation.id,
+                conversation_id: this.$root.conversation.id,
                 message: this.message,
                 _token: this.$root.csrfToken,
             }
+            let formData = new FormData();
+            formData.append("conversation_id" , this.$root.conversation.id);
+            formData.append("message" , this.message);
+            formData.append("_token" , this.$root.csrfToken);
+            if(this.attachment){
+                formData.append("attachment" , this.attachment);
+            }
+
             fetch('/api/messages', {
                 method: 'POST',
-                mode: "cors",
                 headers: {
-                    "content-type": "application/json",
+                    "Accept" : "application/json",
                 },
-                body: JSON.stringify(data)
+                body: formData
             })
             .then(response => response.json())
             .then(json => {
-                this.$parent.messages.push(json)
+                this.$root.messages.push(json)
+                let container = document.querySelector('#chat-body');
+                container.scrollTop = container.scrollHeight;
             });
             this.message = "";
+            this.attachment = null;
         },
+        selectFile(){
+            let fileEle = document.createElement("input");
+            fileEle.setAttribute("type", "file");
+            fileEle.addEventListener('change', () => {
+                if (fileEle.files.length == 0 ){
+                    return ;
+                }
+                this.attachment = fileEle.files[0];
+                this.sendMessage();
+            });
+            fileEle.click();
+        }
     }
 };
 </script>

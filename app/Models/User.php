@@ -70,4 +70,5 @@ class User extends Authenticatable
     public function getAvatarUrlAttribute(){
         return 'https://ui-avatars.com/api/?background=0D8ABC&color=fff&name='.$this->name;
     }
+
 }

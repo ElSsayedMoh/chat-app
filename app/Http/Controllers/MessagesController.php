@@ -26,9 +26,23 @@ class MessagesController extends Controller
             }
         ])->findOrFail($id);
 
+        $messages = $conversation->messages()
+                ->with('user')
+                ->where(function ($query) use ($user){
+                    $query->where('user_id' , $user->id)
+                            ->orWhereRaw('id IN (
+                                SELECT message_id FROM recipients
+                                WHERE recipients.message_id = messages.id
+                                AND recipients.user_id = ?
+                                AND recipients.deleted_at IS NULL
+                                )', [$user->id]);
+                })
+                ->latest()
+                ->paginate();
+
         return [
             'conversation' => $conversation,
-            'messages' => $conversation->messages()->with('user')->latest()->paginate(),
+            'messages' => $messages,
         ];
     }
 
@@ -40,7 +54,11 @@ class MessagesController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'message' => ['required' , 'string'],
+            // 'message' => [
+            //     Rule::requiredIf(function () use ($request){
+            //     return !$request->hasFile('attachment');
+            // }), 'string'],
+            // 'attachment' => ['file'],
             'conversation_id' => [
                 Rule::requiredIf(function () use ($request){
                     return !$request->input('user_id');
@@ -87,16 +105,33 @@ class MessagesController extends Controller
                 }
             }
 
+            $type = 'text';
+            $message = $request->post('message');
+            if($request->hasFile('attachment')){
+                $file = $request->file('attachment');
+                $message = [
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_size' => $file->getSize(),
+                    'mimetype' => $file->getMimeType(),
+                    'file_path' => $file->store('attachment', [
+                        'disk' => 'public',
+                    ]),
+                ];
+                $type = 'attachment';
+            }
+
             $message = $conversation->messages()->create([
                 'user_id' => $user->id,
-                'body' => $request->post('message'),
+                'type' => $type,
+                'body' => $message,
             ]);
     
             DB::statement('
                 INSERT INTO recipients (user_id , message_id)
                 SELECT user_id, ? FROM participants
                 WHERE conversation_id = ?
-            ' , [$message->id , $conversation->id]);
+                AND user_id <> ?
+            ' , [$message->id , $conversation->id , $user->id]);
 
             $conversation->update([
                 'last_message_id' => $message->id,

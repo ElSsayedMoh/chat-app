@@ -23,11 +23,11 @@
         <!-- Chats -->
         <div class="card-list" id="chat-list">
             <!-- Card -->
-            <a v-for="conversation in conversations" v-bind:key="conversation.id" v-bind:href="'#' + conversation.id" @click.prevent="setConversation(conversation)" class="card border-0 text-reset">
+            <a v-for="conversation in $root.conversations" v-bind:key="conversation.id" v-bind:href="'#' + conversation.id" @click.prevent="setConversation(conversation)" class="card border-0 text-reset">
                 <div class="card-body">
                     <div class="row gx-5">
                         <div class="col-auto">
-                            <div class="avatar avatar-online">
+                            <div class="avatar" :class="{'avatar-online' : conversation.participants[0].isOnline}">
                                 <img v-bind:src="conversation.participants[0].avatar_url" alt="#" class="avatar-img">
                             </div>
                         </div>
@@ -40,9 +40,9 @@
 
                             <div class="d-flex align-items-center">
                                 <div class="line-clamp me-auto"></div>
-                                    {{conversation.last_message.body}}
-                                <div class="badge badge-circle bg-primary ms-5">
-                                    <span>3</span>
+                                    {{conversation.last_message.type == 'attachment' ? conversation.last_message.body.file_name : conversation.last_message.body}}
+                                <div v-if="conversation.new_messages" class="badge badge-circle bg-primary ms-5">
+                                    <span>{{ conversation.new_messages }}</span>
                                 </div>
                             </div>
                         </div>
@@ -61,19 +61,23 @@
     export default {
         data(){
             return {
-                conversations: [],
             };
         },
         methods: {
             setConversation(conversation){
                 this.$root.conversation = conversation;
+                this.$root.markAsRead(conversation);
             },
         },
         mounted(){
             fetch('/api/conversations')
                 .then(response => response.json())
                 .then(json => {
-                    this.conversations = json.data;
+                    for(let i in json.data){
+                        let chat = json.data[i].participants[0].isOnline = false;
+                    }
+                    this.$root.conversations = json.data;
+
                 })
         }
     }
