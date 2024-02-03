@@ -32,4 +32,13 @@ class MessengerController extends Controller
         // return $messages;
         return view('messenger' , compact('friends'));
     }
+
+    public function getFriends(){
+        $user = Auth::user();
+        $friends = User::where('id' , '<>' , $user->id)
+            ->orderBy('name')
+            ->paginate();
+
+        return response()->json(['friends' => $friends]);
+    }
 }
