@@ -1,13 +1,12 @@
 import { createApp } from 'vue';
 import Messenger from './components/messages/Messenger.vue';
 import ChatList from './components/messages/ChatList.vue';
+import ChatFriends from './components/messages/ChatFriends.vue';
 
 import Echo from 'laravel-echo';
 
 import Pusher from 'pusher-js';
 window.Pusher = Pusher;
-
-
 
 
 const chatApp = createApp({
@@ -41,7 +40,7 @@ const chatApp = createApp({
         this.laravelEcho
             .join(`Messenger.${this.userId}`)
             .listen('.new-message',  (data) => {
-              
+            
                     let exists = false;
                     for(let i in this.conversations){
                         let conversation = this.conversations[i];
@@ -166,4 +165,5 @@ const chatApp = createApp({
 })
   .component('Messenger' , Messenger)
   .component('ChatList' , ChatList)
+  .component('ChatFriends' , ChatFriends)
   .mount('#chat-app');

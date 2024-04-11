@@ -589,9 +589,9 @@
                                     </div>
 
                                     <!-- List -->
-                                    <div class="card-list">
+                                    {{-- <div class="card-list"> --}}
 
-                                        @php
+                                        {{-- @php
                                             $last_letter = '';
                                         @endphp
 
@@ -609,9 +609,9 @@
 
                                             @php
                                                 $last_letter = $letter;
-                                            @endphp
+                                            @endphp --}}
                                             <!-- Card -->
-                                            <div class="card border-0">
+                                            {{-- <div class="card border-0">
                                                 <div class="card-body">
 
                                                     <div class="row align-items-center gx-5">
@@ -653,12 +653,14 @@
                                                     </div>
 
                                                 </div>
-                                            </div>
+                                            </div> --}}
 
-                                        @endforeach
+                                            <chat-friends/>
+
+                                        {{-- @endforeach --}}
                                         <!-- Card -->
 
-                                    </div>
+                                    {{-- </div> --}}
 
                                 </div>
                             </div>
